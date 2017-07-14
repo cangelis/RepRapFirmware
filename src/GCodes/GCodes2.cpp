@@ -574,7 +574,7 @@ bool GCodes::HandleMcode(GCodeBuffer& gb, StringRef& reply)
 			const char* str = gb.GetUnprecedentedString();
 			if (str != nullptr)
 			{
-				bool ok = OpenFileToWrite(gb, platform.GetGCodeDir(), str);
+				bool ok = OpenFileToWrite(gb, platform.GetGCodeDir(), str, 0);
 				if (ok)
 				{
 					reply.printf("Writing to file: %s", str);
@@ -2343,7 +2343,8 @@ bool GCodes::HandleMcode(GCodeBuffer& gb, StringRef& reply)
 	case 559: // Upload config.g or another gcode file to put in the sys directory
 		{
 			const char* str = (gb.Seen('P') ? gb.GetString() : platform.GetConfigFile());
-			const bool ok = OpenFileToWrite(gb, platform.GetSysDir(), str);
+			const float size = (gb.Seen('S') ? gb.GetFValue() : 0);
+			const bool ok = OpenFileToWrite(gb, platform.GetSysDir(), str, size);
 			if (ok)
 			{
 				reply.printf("Writing to file: %s", str);
@@ -2359,7 +2360,7 @@ bool GCodes::HandleMcode(GCodeBuffer& gb, StringRef& reply)
 	case 560: // Upload reprap.htm or another web interface file
 		{
 			const char* str = (gb.Seen('P') ? gb.GetString() : INDEX_PAGE_FILE);
-			const bool ok = OpenFileToWrite(gb, platform.GetWebDir(), str);
+			const bool ok = OpenFileToWrite(gb, platform.GetWebDir(), str, 0);
 			if (ok)
 			{
 				reply.printf("Writing to file: %s", str);

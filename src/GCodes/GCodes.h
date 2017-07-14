@@ -133,6 +133,7 @@ public:
 
 	void WriteGCodeToFile(GCodeBuffer& gb);								// Write this GCode into a file
 	void WriteHTMLToFile(GCodeBuffer& gb, char b);						// Save an HTML file (usually to upload a new web interface)
+	void FinishWrite(GCodeBuffer& gb);
 
 	bool IsFlashing() const { return isFlashing; }						// Is a new firmware binary going to be flashed?
 
@@ -218,7 +219,7 @@ private:
 	void SetMACAddress(GCodeBuffer& gb);								// Deals with an M540
 	void HandleReply(GCodeBuffer& gb, bool error, const char *reply);	// Handle G-Code replies
 	void HandleReply(GCodeBuffer& gb, bool error, OutputBuffer *reply);
-	bool OpenFileToWrite(GCodeBuffer& gb, const char* directory, const char* fileName);	// Start saving GCodes in a file
+	bool OpenFileToWrite(GCodeBuffer& gb, const char* directory, const char* fileName, const float size);	// Start saving GCodes in a file
 	bool SendConfigToLine();											// Deal with M503
 	bool OffsetAxes(GCodeBuffer& gb);									// Set offsets - deprecated, use G10
 	void SetPidParameters(GCodeBuffer& gb, int heater, StringRef& reply); // Set the P/I/D parameters for a heater
@@ -351,6 +352,8 @@ private:
 	float speedFactor;							// speed factor, including the conversion from mm/min to mm/sec, normally 1/60
 	float extrusionFactors[MaxExtruders];		// extrusion factors (normally 1.0)
 	float currentBabyStepZOffset;				// The accumulated Z offset due to baby stepping requests
+	float fileSize;
+	float seekSize;
 
 	// Z probe
 	int32_t g30ProbePointIndex;					// the index of the point we are probing (G30 P parameter), or -1 if none

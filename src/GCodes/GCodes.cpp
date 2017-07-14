@@ -88,6 +88,8 @@ void GCodes::Init()
 	}
 	eofString = EOF_STRING;
 	eofStringCounter = 0;
+	fileSize = 0;
+	seekSize = 0;
 	eofStringLength = strlen(eofString);
 	runningConfigFile = false;
 	doingToolChange = false;
@@ -2601,10 +2603,12 @@ void GCodes::GetCurrentCoordinates(StringRef& s) const
 	}
 }
 
-bool GCodes::OpenFileToWrite(GCodeBuffer& gb, const char* directory, const char* fileName)
+bool GCodes::OpenFileToWrite(GCodeBuffer& gb, const char* directory, const char* fileName, const float size)
 {
 	fileBeingWritten = platform.GetFileStore(directory, fileName, true);
 	eofStringCounter = 0;
+	fileSize = size;
+	seekSize = 0;
 	if (fileBeingWritten == NULL)
 	{
 		platform.MessageF(GENERIC_MESSAGE, "Can't open GCode file \"%s\" for writing.\n", fileName);
@@ -2625,17 +2629,12 @@ void GCodes::WriteHTMLToFile(GCodeBuffer& gb, char b)
 		return;
 	}
 
-	if (b == eofString[eofStringCounter])
+	if ((b == eofString[eofStringCounter]) && (fileSize == 0))
 	{
 		eofStringCounter++;
 		if (eofStringCounter >= eofStringLength)
 		{
-			fileBeingWritten->Close();
-			fileBeingWritten = NULL;
-			gb.SetWritingFileDirectory(NULL);
-			const char* r = (platform.Emulating() == marlin) ? "Done saving file." : "";
-			HandleReply(gb, false, r);
-			return;
+			FinishWrite(gb);
 		}
 	}
 	else
@@ -2651,8 +2650,22 @@ void GCodes::WriteHTMLToFile(GCodeBuffer& gb, char b)
 		// NB: This approach isn't very efficient, but I (chrishamm) think the whole uploading
 		// code should be rewritten anyway in the future and moved away from the GCodes class.
 		fileBeingWritten->Write(b);
+		seekSize++;
+		if ((fileSize > 0) && (seekSize >= fileSize)) {
+			FinishWrite(gb);
+		}
 	}
 }
+
+void GCodes::FinishWrite(GCodeBuffer& gb)
+{
+	fileBeingWritten->Close();
+	fileBeingWritten = NULL;
+	gb.SetWritingFileDirectory(NULL);
+	const char* r = (platform.Emulating() == marlin) ? "Done saving file." : "";
+	HandleReply(gb, false, r);
+}
+
 
 void GCodes::WriteGCodeToFile(GCodeBuffer& gb)
 {
